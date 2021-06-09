@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    name: traderdb
+    url: jdbc:mysql://localhost/traderdbdev?characterEncoding=utf-8
+    username: root
+    password: root    
+
+# create table automatically
+  jpa:
+    hibernate:
+      ddl-auto: create
+
+
