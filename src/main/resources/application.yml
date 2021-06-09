@@ -1,0 +1,19 @@
+spring:
+  http:
+    encoding:
+      force: true
+      charset: UTF-8
+      enabled: true
+      uri-encoding: UTF-8
+  datasource:
+    name: traderdb
+    url: jdbc:mysql://localhost/traderdb?characterEncoding=utf-8
+    username: root
+    password: root    
+
+# create table automatically
+#  jpa:
+#    hibernate:
+#      ddl-auto: create
+
+
