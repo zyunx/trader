@@ -1,6 +1,7 @@
 package net.zyunx.trader.ui;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -83,11 +84,15 @@ public class MainView extends VerticalLayout {
                     
                     Map<Long, List<TopPlate>> mapOfPlateById = plates.stream().collect(Collectors.groupingBy(TopPlate::getId));
                     
-                    for (Map.Entry<Long, List<TopPlate>> ent : mapOfPlateById.entrySet()) {
-                        int count = CollectionUtils.size(ent.getValue());
+                    List<List<TopPlate>> listOfTopPlateList = new ArrayList<>();
+                    listOfTopPlateList.addAll(mapOfPlateById.values());
+                    listOfTopPlateList.sort((e1, e2) -> CollectionUtils.size(e2) - CollectionUtils.size(e1));
+                    
+                    for (List<TopPlate> list : listOfTopPlateList) {
+                        int count = CollectionUtils.size(list);
                         if (count > 0) {
-                            TopPlatePanel pp = new TopPlatePanel(ent.getKey(), 
-                                    ent.getValue().get(0).getName(), count, ent.getValue());
+                            TopPlatePanel pp = new TopPlatePanel(list.get(0).getId(), 
+                                    list.get(0).getName(), count, list);
                             topGainersContentPanel.add(pp);
                         }
                         
