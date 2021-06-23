@@ -6,10 +6,14 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.transaction.Transactional;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.http.HttpMethod;
@@ -22,7 +26,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +44,7 @@ public class XgbServiceImpl implements XgbService {
     private ObjectMapper objectMapper;
     
     @Override
+    @Transactional
     public void fetchTopPlate(FetchXgbTopPlateCommand command) throws JsonMappingException, JsonProcessingException {
         LocalDate date = command.getDate();
         
@@ -57,16 +61,19 @@ public class XgbServiceImpl implements XgbService {
             return;
         }
         
+        int rank = 0;
         for (TopPlateResponse.DataItem i : plateResponse.getData().getItems()) {
+            rank++;
+            
             TopPlate p = new TopPlate();
             p.setDate(date);
             p.setId(i.getId());
             p.setName(i.getName());
             p.setDescription(i.getDescription());
+            p.setRank(rank);
             
             plateList.add(p);
         }
-        plateRepository.saveAll(plateList);
 
         
         String stockUrl = "https://flash-api.xuangubao.cn/api/surge_stock/stocks?date={date}&normal=true&uplimit=true";
@@ -116,6 +123,9 @@ public class XgbServiceImpl implements XgbService {
         if (items.isNull()) {
             return;
         }
+        
+        Map<Long, List<TopPlate>> mapPlateOfId = plateList.stream().collect(Collectors.groupingBy(ee -> ee.getId()));
+        
         List<TopStock> stocks = new ArrayList<>();
         for (Iterator<JsonNode> it = items.elements(); it.hasNext(); ) {
             JsonNode n = it.next();
@@ -126,24 +136,30 @@ public class XgbServiceImpl implements XgbService {
             s.setDescription(n.get(descriptionFieldIndex).asText());
             
             List<TopPlate> pl = new ArrayList<>();
-            ArrayNode plates = (ArrayNode) n.get(platesFieldIndex);
+            JsonNode plates = n.get(platesFieldIndex);
             for (Iterator<JsonNode> pit = plates.elements(); pit.hasNext(); ) {
-                TopPlateId p = new TopPlateId();
-                p.setDate(date);
-                p.setId(pit.next().get("id").asLong());
-                log.info("pid: " + p);
-                Optional<TopPlate> pp = plateRepository.findById(p);
-                if (pp.isPresent()) {
-                    pl.add(pp.get());
+//                TopPlateId p = new TopPlateId();
+//                p.setDate(date);
+//                p.setId(pit.next().get("id").asLong());
+                // log.info("pid: " + p);
+                
+                List<TopPlate> pp = mapPlateOfId.getOrDefault(pit.next().get("id").asLong(), Collections.emptyList());
+                
+                if (!pp.isEmpty()) {
+                    pl.add(pp.get(0));
+                    pp.get(0).getStocks().add(s);
+                    //pp.get().getStocks().add(s);
                 }
                 
             }
             
-            s.setPlates(pl);
+            //s.setPlates(pl);
             stocks.add(s);
         }
         log.info("stocks: " + stocks);
+        
         stockRepository.saveAll(stocks);
+        plateRepository.saveAll(plateList);
         
     }
 

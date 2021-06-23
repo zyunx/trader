@@ -1,7 +1,12 @@
 package net.zyunx.trader.ui;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.button.Button;
@@ -9,17 +14,26 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Route;
 
+import lombok.extern.slf4j.Slf4j;
 import net.zyunx.trader.model.xgb.FetchXgbTopPlateCommand;
+import net.zyunx.trader.model.xgb.TopPlate;
+import net.zyunx.trader.model.xgb.TopPlateRepository;
 import net.zyunx.trader.model.xgb.XgbService;
 
 @Route
+@Slf4j
 public class MainView extends VerticalLayout {
 
     @Autowired
     private XgbService xgbService;
     
+    @Autowired
+    private TopPlateRepository topPlateRepository;
+    
+    private static final List<Long> IGNORE_PLATE_ID_LIST = Arrays.asList(17864537L, 17290881L, 24898553L, -1L);
         /**
      * 
      */
@@ -46,6 +60,54 @@ public class MainView extends VerticalLayout {
             HorizontalLayout fetchXgbLayout = new HorizontalLayout();
             fetchXgbLayout.add(valueDatePicker, fetchXgbButton);
             
-            add(fetchXgbLayout, new Button("Click me", e -> Notification.show("Hello, Spring+Vaadin user!")));
+            // top gainer
+            DatePicker topGainerStartDatePicker = new DatePicker("开始日期");
+            topGainerStartDatePicker.setValue(now);
+            
+            DatePicker topGainerEndDatePicker = new DatePicker("结束日期");
+            topGainerEndDatePicker.setValue(now);
+            
+            NumberField rankNumberField = new NumberField("排名");
+            rankNumberField.setValue(5.0);
+            
+            VerticalLayout topGainersContentPanel = new VerticalLayout();
+            Button showTopGainerButton = new Button("显示风口板块", e -> {
+                try {
+                    topGainersContentPanel.removeAll();
+                    List<TopPlate> plates = topPlateRepository.findByDateBetweenAndRankLessThanEqualAndIdNotIn(
+                            topGainerStartDatePicker.getValue(),
+                            topGainerEndDatePicker.getValue(),
+                            rankNumberField.getValue().intValue(),
+                            IGNORE_PLATE_ID_LIST);
+                    log.info("plates: " + plates);
+                    
+                    Map<Long, List<TopPlate>> mapOfPlateById = plates.stream().collect(Collectors.groupingBy(TopPlate::getId));
+                    
+                    for (Map.Entry<Long, List<TopPlate>> ent : mapOfPlateById.entrySet()) {
+                        int count = CollectionUtils.size(ent.getValue());
+                        if (count > 0) {
+                            TopPlatePanel pp = new TopPlatePanel(ent.getKey(), 
+                                    ent.getValue().get(0).getName(), count, ent.getValue());
+                            topGainersContentPanel.add(pp);
+                        }
+                        
+                    }
+
+                } catch (Exception ex) {
+                    log.error("显示风口板块异常: ", ex);
+                    Notification.show("显示风口板块异常: " + ex.getMessage());
+                }
+            });
+            
+            HorizontalLayout topGainersControlLayout = new HorizontalLayout(
+                    topGainerStartDatePicker, topGainerEndDatePicker, 
+                    rankNumberField, showTopGainerButton);
+            topGainersControlLayout.setAlignItems(Alignment.BASELINE);
+            VerticalLayout topGainersLayout = new VerticalLayout(
+                    topGainersControlLayout,
+                    topGainersContentPanel
+                    );
+            
+            add(fetchXgbLayout, topGainersLayout);
         }
 }
