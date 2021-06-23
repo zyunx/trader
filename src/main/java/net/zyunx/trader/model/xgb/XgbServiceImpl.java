@@ -3,6 +3,7 @@ package net.zyunx.trader.model.xgb;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -60,6 +61,9 @@ public class XgbServiceImpl implements XgbService {
         if (CollectionUtils.isEmpty(plateResponse.getData().getItems())) {
             return;
         }
+        
+        date = LocalDateTime.ofEpochSecond(plateResponse.getData().getTimestamp(), 0, ZoneOffset.of("+8")).toLocalDate();
+        log.info("real date: " + date.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
         
         int rank = 0;
         for (TopPlateResponse.DataItem i : plateResponse.getData().getItems()) {
