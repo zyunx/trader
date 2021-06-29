@@ -10,4 +10,6 @@ public interface TopPlateRepository extends JpaRepository<TopPlate, TopPlateId> 
             LocalDate startDate, LocalDate endDate, 
             Integer rank,
             List<Long> idList);
+    
+    List<TopPlate> findByIdAndDateBetween(Long id, LocalDate startDate, LocalDate endDate);
 }

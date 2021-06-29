@@ -12,6 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
@@ -30,6 +32,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.zyunx.trader.model.Group;
+import net.zyunx.trader.model.Stock;
 
 @Service
 @Slf4j
@@ -165,6 +169,32 @@ public class XgbServiceImpl implements XgbService {
         stockRepository.saveAll(stocks);
         plateRepository.saveAll(plateList);
         
+    }
+
+    @Override
+    public Optional<Group> getGroup(Long id, LocalDate startDate, LocalDate endDate) {
+        List<TopPlate> plates = plateRepository.findByIdAndDateBetween(id, startDate, endDate);
+        if (plates.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        String name = plates.get(0).getName();
+        Set<Stock> stocks = plates
+                .stream()
+                .flatMap(e -> e.getStocks().stream())
+                .collect(Collectors.toList())
+                .stream()
+                .map(e -> Stock.create(e.getCode(), e.getProdName()))
+                .collect(Collectors.toSet());
+        
+        List<Stock> orderedStocks = new ArrayList<>();
+        orderedStocks.addAll(stocks);
+        orderedStocks.sort((e1, e2) -> e1.getCode().compareTo(e2.getCode()));
+        Group g = new Group();
+        g.setId(id);
+        g.setName(name);
+        g.setStocks(orderedStocks);
+        return Optional.of(g);
     }
 
 }
