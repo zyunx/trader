@@ -8,9 +8,9 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.router.AfterNavigationEvent;
@@ -45,9 +45,11 @@ public class GroupView extends VerticalLayout
     private Long id;
     
     
-    private VerticalLayout stockImagePanel;
+    private Div stockImagePanel;
     
-    
+    public GroupView() {
+        
+    }
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
         Location location = event.getLocation();
@@ -80,8 +82,7 @@ public class GroupView extends VerticalLayout
             return;
         }
         
-        stockImagePanel = new VerticalLayout();
-        
+        stockImagePanel = new Div();
         vm.addStockChangeListener(e -> {
             stockImagePanel.removeAll();
             Image stockImage = new Image();
@@ -90,6 +91,9 @@ public class GroupView extends VerticalLayout
             stockImage.setSizeUndefined();
             stockImagePanel.add(stockImage);
         });
+        stockImagePanel.getStyle().set("position", "fixed");
+        stockImagePanel.getStyle().set("right", "0");
+        stockImagePanel.getStyle().set("bottom", "0");
         
         RadioButtonGroup<Stock> radioGroup = new RadioButtonGroup<>();
         radioGroup.setItems(vm.getStocks());
@@ -98,15 +102,15 @@ public class GroupView extends VerticalLayout
         });
         radioGroup.setValue(vm.getStocks().get(0));
         
-        VerticalLayout radioGroupLayout = new VerticalLayout(radioGroup);
-        radioGroupLayout.setWidth("50%");
+        Div radioGroupLayout = new Div(radioGroup);
+        radioGroupLayout.setWidthFull();
 
-        stockImagePanel.setWidth("50%");
-        
-        add(new HorizontalLayout(radioGroupLayout, stockImagePanel));
+        add(radioGroupLayout, stockImagePanel);
         
         
     }
+    
+    
     
     
     String stockImageUrl(String code) {
