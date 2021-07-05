@@ -34,6 +34,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.zyunx.trader.model.Group;
 import net.zyunx.trader.model.Stock;
+import net.zyunx.trader.ui.TopPlatePanelModel;
 
 @Service
 @Slf4j
@@ -195,6 +196,33 @@ public class XgbServiceImpl implements XgbService {
         g.setName(name);
         g.setStocks(orderedStocks);
         return Optional.of(g);
+    }
+
+    @Override
+    public List<TopPlatePanelModel> computeTopPlatePanelModelList(LocalDate startDate, LocalDate endDate,
+            Integer rankAtLeast, List<TopPlate> plates) {
+        Map<Long, List<TopPlate>> mapOfPlateById = plates.stream().collect(Collectors.groupingBy(TopPlate::getId));
+      
+        List<List<TopPlate>> listOfTopPlateList = new ArrayList<>();
+        listOfTopPlateList.addAll(mapOfPlateById.values());
+        listOfTopPlateList.sort((e1, e2) -> CollectionUtils.size(e2) - CollectionUtils.size(e1));
+      
+        List<TopPlatePanelModel> result = new ArrayList<>();
+        listOfTopPlateList.forEach(list -> {
+            if (CollectionUtils.isNotEmpty(list)) {
+                TopPlate oneOfThem = list.get(0);
+                TopPlatePanelModel m = new TopPlatePanelModel();
+                m.setStartDate(startDate);
+                m.setEndDate(endDate);
+                m.setCountOfOnList(CollectionUtils.size(list));
+                m.setPlateId(oneOfThem.getId());
+                m.setPlateName(oneOfThem.getName());
+                m.setPlates(list);
+                result.add(m);
+            }
+        });
+        
+        return result;
     }
 
 }

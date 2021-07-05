@@ -1,13 +1,9 @@
 package net.zyunx.trader.ui;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.button.Button;
@@ -75,29 +71,24 @@ public class MainView extends VerticalLayout {
             Button showTopGainerButton = new Button("显示风口板块", e -> {
                 try {
                     topGainersContentPanel.removeAll();
+                    
+                    LocalDate startDate = topGainerStartDatePicker.getValue();
+                    LocalDate endDate = topGainerEndDatePicker.getValue();
+                    Integer rankAtLeast = rankNumberField.getValue().intValue();
+                    
                     List<TopPlate> plates = topPlateRepository.findByDateBetweenAndRankLessThanEqualAndIdNotIn(
-                            topGainerStartDatePicker.getValue(),
-                            topGainerEndDatePicker.getValue(),
-                            rankNumberField.getValue().intValue(),
+                            startDate,
+                            endDate,
+                            rankAtLeast,
                             IGNORE_PLATE_ID_LIST);
                     log.info("plates: " + plates);
                     
-                    Map<Long, List<TopPlate>> mapOfPlateById = plates.stream().collect(Collectors.groupingBy(TopPlate::getId));
+                    List<TopPlatePanelModel> models = xgbService.computeTopPlatePanelModelList(startDate, endDate, rankAtLeast, plates);
                     
-                    List<List<TopPlate>> listOfTopPlateList = new ArrayList<>();
-                    listOfTopPlateList.addAll(mapOfPlateById.values());
-                    listOfTopPlateList.sort((e1, e2) -> CollectionUtils.size(e2) - CollectionUtils.size(e1));
-                    
-                    for (List<TopPlate> list : listOfTopPlateList) {
-                        int count = CollectionUtils.size(list);
-                        if (count > 0) {
-                            TopPlatePanel pp = new TopPlatePanel(list.get(0).getId(), 
-                                    list.get(0).getName(), count, list);
-                            topGainersContentPanel.add(pp);
-                        }
-                        
+                    for (TopPlatePanelModel m : models) {
+                        TopPlatePanel pp = new TopPlatePanel(m);
+                        topGainersContentPanel.add(pp);
                     }
-
                 } catch (Exception ex) {
                     log.error("显示风口板块异常: ", ex);
                     Notification.show("显示风口板块异常: " + ex.getMessage());

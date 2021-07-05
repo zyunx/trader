@@ -9,6 +9,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -28,18 +29,23 @@ public class TopPlatePanel extends Composite<Div> {
     private Label nameLabel = new Label();
     private Label countLabel = new Label();
     
+    public TopPlatePanel(TopPlatePanelModel model) {
+        String url = String.format("/group?id=%d&startDate=%s&endDate=%s", 
+                model.getPlateId(), model.getStartDate().toString(), model.getEndDate().toString());
+        Anchor anchor = new Anchor(url, "分组行情");
+        anchor.setTarget("_blank");
 
-    public TopPlatePanel(Long id, String name, Integer count, List<TopPlate> plates) {
-        
-        idLabel.setText(String.valueOf(id) + " ");
-        nameLabel.setText(name + " ");
-        countLabel.setText(String.valueOf(count));
+        idLabel.setText(String.valueOf(model.getPlateId()) + " ");
+        nameLabel.setText(model.getPlateName() + " ");
+        countLabel.setText(String.valueOf(model.getCountOfOnList()));
         
         VerticalLayout vl = new VerticalLayout();
-        vl.add(new HorizontalLayout(idLabel, nameLabel, countLabel));
+        vl.add(new HorizontalLayout(idLabel, nameLabel, countLabel, anchor));
         
         List<TopPlate> descList = new ArrayList<>();
         String lastDesc = "";
+        
+        List<TopPlate> plates = model.getPlates();
         
         plates.sort((e1, e2) -> e1.getDate().isAfter(e2.getDate()) ? 1 : -1);
         
