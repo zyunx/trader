@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### vaadin ###
+node_modules/
+package-lock.json
+package.json
+webpack.config.js
+webpack.generated.js
