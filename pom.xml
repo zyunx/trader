@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>net.zyunx</groupId>
 	<artifactId>trader</artifactId>
-	<version>0.1.0</version>
+	<version>0.2.0-SNAPSHOT</version>
 	<name>trader</name>
 	<description>Trader&apos;s system</description>
 	<properties>
