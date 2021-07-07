@@ -1,13 +1,17 @@
 package net.zyunx.trader.ui;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -20,7 +24,7 @@ import net.zyunx.trader.model.xgb.TopPlate;
 import net.zyunx.trader.model.xgb.TopPlateRepository;
 import net.zyunx.trader.model.xgb.XgbService;
 
-@Route
+@Route("")
 @Slf4j
 public class MainView extends VerticalLayout {
 
@@ -37,37 +41,32 @@ public class MainView extends VerticalLayout {
     private static final long serialVersionUID = 1L;
 
         public MainView() {
-            LocalDate now = LocalDate.now();
+            LocalDate defaultDate = LocalDateTime.now().getHour() > 15 ? LocalDate.now() : LocalDate.now().minusDays(1);
             
-            DatePicker valueDatePicker = new DatePicker();
-            valueDatePicker.setValue(now);
+            Component fetchXuanGuBaoTopPlateViewPart = createFetchXuanGuBaoTopPlateViewPart(defaultDate);
             
-            Button fetchXgbButton = new Button("获取选股宝风口板块", e -> {
-                try {
-                    FetchXgbTopPlateCommand command = new FetchXgbTopPlateCommand();
-                    command.setDate(valueDatePicker.getValue());
-                    xgbService.fetchTopPlate(command);
-                    Notification.show("获取选股宝风口板块成功!");
-                } catch (Exception ex) {
-                    Notification.show("获取选股宝风口板块失败: " + ex.getMessage());
-                }
-                
-            });
+            Component topPlateViewPart = createTopPlateViewPart(defaultDate);
             
-            HorizontalLayout fetchXgbLayout = new HorizontalLayout();
-            fetchXgbLayout.add(valueDatePicker, fetchXgbButton);
+            H1 h1 = new H1("交易者复盘系统");
             
+            H2 h2 = new H2("板块");
+            
+            add(h1, h2, fetchXuanGuBaoTopPlateViewPart, topPlateViewPart);
+        }
+        
+        Component createTopPlateViewPart(LocalDate defaultDate) {
             // top gainer
             DatePicker topGainerStartDatePicker = new DatePicker("开始日期");
-            topGainerStartDatePicker.setValue(now);
+            topGainerStartDatePicker.setValue(defaultDate);
             
             DatePicker topGainerEndDatePicker = new DatePicker("结束日期");
-            topGainerEndDatePicker.setValue(now);
+            topGainerEndDatePicker.setValue(defaultDate);
             
             NumberField rankNumberField = new NumberField("排名");
             rankNumberField.setValue(5.0);
             
             VerticalLayout topGainersContentPanel = new VerticalLayout();
+            topGainersContentPanel.setPadding(false);
             Button showTopGainerButton = new Button("显示风口板块", e -> {
                 try {
                     topGainersContentPanel.removeAll();
@@ -103,7 +102,30 @@ public class MainView extends VerticalLayout {
                     topGainersControlLayout,
                     topGainersContentPanel
                     );
+            topGainersLayout.setPadding(false);
             
-            add(fetchXgbLayout, topGainersLayout);
+            return topGainersLayout;
+        }
+        Component createFetchXuanGuBaoTopPlateViewPart(LocalDate defaultDate) {
+            DatePicker valueDatePicker = new DatePicker("日期");
+            valueDatePicker.setValue(defaultDate);
+            
+            Button fetchXgbButton = new Button("获取选股宝风口板块", e -> {
+                try {
+                    FetchXgbTopPlateCommand command = new FetchXgbTopPlateCommand();
+                    command.setDate(valueDatePicker.getValue());
+                    xgbService.fetchTopPlate(command);
+                    Notification.show("获取选股宝风口板块成功!");
+                } catch (Exception ex) {
+                    Notification.show("获取选股宝风口板块失败: " + ex.getMessage());
+                }
+                
+            });
+            
+            HorizontalLayout fetchXgbLayout = new HorizontalLayout();
+            fetchXgbLayout.add(valueDatePicker, fetchXgbButton);
+            fetchXgbLayout.setAlignItems(Alignment.BASELINE);
+            
+            return fetchXgbLayout;
         }
 }

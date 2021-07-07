@@ -9,8 +9,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.router.AfterNavigationEvent;
@@ -75,8 +77,12 @@ public class GroupView extends VerticalLayout
         
         GroupViewModel vm = new GroupViewModel(group.get().getName(), group.get().getStocks());
         
-        add(new Label(vm.getName() + " 从" + startDate + "到" + endDate));
-        
+        HorizontalLayout titleLayout = new HorizontalLayout(
+                new H2(vm.getName()),
+                new Paragraph(startDate + " ~ " + endDate)
+                );
+        titleLayout.setAlignItems(Alignment.BASELINE);
+        add(titleLayout);
         
         if (vm.isEmpty()) {
             return;
